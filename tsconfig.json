@@ -1,0 +1,13 @@
+{
+    "compilerOptions": {
+        //"module": "commonjs",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "out": ".tmp/scripts/nori-demo.js",
+        "sourceMap": true
+    },
+    "files": [
+        "src/scripts/nori-demo.ts"
+    ]
+}

@@ -82,7 +82,7 @@ module nori {
   // filter type 1: 2-pole resonator
   class ResDef {
     // coefficients
-    constructor(public a:sF32, public b:sF32, public c:sF32) {
+    constructor(public a:sF32 = 0, public b:sF32 = 0, public c:sF32 = 0) {
     }
 
     set(f:sF32, bw:sF32, gain:sF32) {
@@ -96,8 +96,8 @@ module nori {
 
   class Resonator {
     def:ResDef;
-    p1:sF32; // delay buffers
-    p2:sF32;
+    p1:sF32 = 0; // delay buffers
+    p2:sF32 = 0;
 
     setdef(a_def:ResDef) {
       this.def = a_def;
@@ -110,9 +110,8 @@ module nori {
       return x;
     }
   }
-  ;
 
-  var d_peq1:ResDef;
+  var d_peq1:ResDef = new ResDef();
 
   var flerp = (a:sF32, b:sF32, x:sF32) => a + x * (b - a);
 
@@ -127,55 +126,57 @@ module nori {
 
 
   class syVRonan {
-    rdef:ResDef[] = Array(7); // nas,f1,f2,f3,f4,f5,f6;
-    a_voicing:sF32;
-    a_aspiration:sF32;
-    a_frication:sF32;
-    a_bypass:sF32;
+    rdef:ResDef[] = R.times(_ => new ResDef(), 7); // nas,f1,f2,f3,f4,f5,f6;
+    a_voicing:sF32 = 0;
+    a_aspiration:sF32 = 0;
+    a_frication:sF32 = 0;
+    a_bypass:sF32 = 0;
   }
 
   const NOISEGAIN = 0.25;
 
-  class syWRonan extends syVRonan {
-    newframe:syVRonan;
+  export class syWRonan extends syVRonan {
+    newframe:syVRonan = new syVRonan();
 
-    res:Resonator[] = Array(7);  // 0:nas, 1..6: 1..6
+    res:Resonator[] = R.times(_ => new Resonator(), 7);  // 0:nas, 1..6: 1..6
 
-    lastin2:sF32;
+    lastin2:sF32 = 0;
 
     // settings
     texts:string[] = Array(64);
-    pitch:sF32;
-    framerate:sInt;
+    pitch:sF32 = 0;
+    framerate:sInt = 0;
 
     // noise
-    nseed:sU32;
-    nout:sF32;
+    nseed:sU32 = 0;
+    nout:sF32 = 0;
 
     // phonem seq
-    framecount:sInt;  // frame rate divider
-    spos:sInt;        // pos within syl definition (0..3)
-    scounter:sInt;    // syl duration divider
-    cursyl:sInt;      // current syl
-    durfactor:sInt;   // duration modifier
-    invdur:sF32;      // 1.0 / current duration
+    framecount:sInt = 0;  // frame rate divider
+    spos:sInt = 0;        // pos within syl definition (0..3)
+    scounter:sInt = 0;    // syl duration divider
+    cursyl:sInt = 0;      // current syl
+    durfactor:sInt = 0;   // duration modifier
+    invdur:sF32 = 0;      // 1.0 / current duration
     baseptr:string; // pointer to start of text
     ptr:string;  // pointer to text
-    curp1:sInt; // current/last phonemes
-    curp2:sInt;
+    curp1:sInt = 0; // current/last phonemes
+    curp2:sInt = 0;
 
     // sync
-    wait4on:sInt;
-    wait4off:sInt;
+    wait4on:sInt = 0;
+    wait4off:sInt = 0;
 
     // post EQ
-    hpb1:sF32;
-    hpb2:sF32;
-    peq1:Resonator;
+    hpb1:sF32 = 0;
+    hpb2:sF32 = 0;
+    peq1:Resonator = new Resonator();
 
     SetFrame(p1s:Phoneme, p2s:Phoneme, x:sF32, dest:syVRonan) {
-      var p1:Phoneme;
-      var p2:Phoneme;
+      var p1:Phoneme = p1s;
+      var p2:Phoneme = p2s;
+
+      //console.log('SetFrame:', p1.a_voicing, p2.a_voicing, x);
 
       //@formatter:off
       var p1f=[p1.fnf,p1.f1f,p1.f2f,p1.f3f,f4    ,f5     ,f6];
@@ -185,9 +186,6 @@ module nori {
       var p2b=[bn    ,p2.f1b,p2.f2b,p2.f3b,b4    ,b5     ,b6];
       var p2a=[p2.a_n,p2.a_1,p2.a_2,p2.a_3,p2.a_4,p2.a_56,p2.a_56];
         //@formatter:on
-
-      p1 = p1s;
-      p2 = p2s;
 
       for (var i = 0; i < 7; i++) {
         var resDef:ResDef = dest.rdef[i];
@@ -201,16 +199,17 @@ module nori {
       dest.a_aspiration = db2lin(p1.a_aspiration, p2.a_aspiration, x);
       dest.a_frication = db2lin(p1.a_frication, p2.a_frication, x);
       dest.a_bypass = db2lin(p1.a_bypass, p2.a_bypass, x);
+
+      //console.log('SetFrame:', p1.a_voicing, p2.a_voicing, x, dest.a_voicing);
     }
 
     noise():sF32 {
-      var val:sU32|sF32;
-
       // random...
-      this.nseed = (this.nseed * 196314165) + 907633515;
+      //this.nseed = (this.nseed * 196314165) + 907633515;
 
       // convert to float between 2.0 and 4.0
-      val = (this.nseed >> 9) | 0x40000000;
+
+      var val = Math.random() * 2 + 2;
 
       // slight low pass filter...
       this.nout = (val - 3.0) + 0.75 * this.nout;
@@ -222,8 +221,11 @@ module nori {
         this.res[i].setdef(this.rdef[i]);
       }
       this.peq1.setdef(d_peq1);
+      //console.log('phonemes:', phonemes);
       this.SetFrame(phonemes[18], phonemes[18], 0, this); // off
       this.SetFrame(phonemes[18], phonemes[18], 0, this.newframe); // off
+      //console.log(phonemes[0]);
+      //console.log(phonemes[1]);
       //curp1=curp2=18;
       this.curp1 = 18;
       this.curp2 = 18;
@@ -232,36 +234,45 @@ module nori {
 
   }
 
-  function ronanCBSetSR(ptr:syWRonan, sr:sU32) {
+  export function ronanCBSetSR(ptr:syWRonan, sr:sU32) {
     g.samplerate = sr;
     g.fc2pi_sr = 2.0 * PI / sr;
     g.fcminuspi_sr = -g.fc2pi_sr * 0.5;
   }
 
-  function ronanCBInit(wsptr:syWRonan) {
+  export function ronanCBInit(wsptr:syWRonan) {
     // convert phoneme table to a usable format
     var rp = rawphonemes.map(sS8 => sS8 < 128 ? sS8 : (sS8 - 256));
-    phonemes = R.range(0, NPHONEMES).map(i=> ({
-      f1f: rp[i],
-      f1b: rp[i * (NPHONEMES + 1)],
-      f2f: rp[i * (NPHONEMES + 2)],
-      f2b: rp[i * (NPHONEMES + 3)],
-      f3f: rp[i * (NPHONEMES + 4)],
-      f3b: rp[i * (NPHONEMES + 5)],
-      fnf: rp[i * (NPHONEMES + 6)],
-      a_voicing: rp[i * (NPHONEMES + 7)],
-      a_aspiration: rp[i * (NPHONEMES + 8)],
-      a_frication: rp[i * (NPHONEMES + 9)],
-      a_bypass: rp[i * (NPHONEMES + 10)],
-      a_1: rp[i * (NPHONEMES + 11)],
-      a_2: rp[i * (NPHONEMES + 12)],
-      a_3: rp[i * (NPHONEMES + 13)],
-      a_4: rp[i * (NPHONEMES + 14)],
-      a_n: rp[i * (NPHONEMES + 15)],
-      a_56: rp[i * (NPHONEMES + 16)],
-      duration: rp[i * (NPHONEMES + 17)],
-      rank: rp[i * (NPHONEMES + 18)],
-    }));
+    var val = 0;
+    rp = rp.map((d) => {
+      val += d;
+      return val;
+    });
+
+    phonemes = R.range(0, NPHONEMES).map(i=> {
+      var t = (index:number) => multipliers[index] * rp[i + NPHONEMES * index];
+      return {
+        f1f: t(0),
+        f1b: t(1),
+        f2f: t(2),
+        f2b: t(3),
+        f3f: t(4),
+        f3b: t(5),
+        fnf: t(6),
+        a_voicing: t(7),
+        a_aspiration: t(8),
+        a_frication: t(9),
+        a_bypass: t(10),
+        a_1: t(11),
+        a_2: t(12),
+        a_3: t(13),
+        a_4: t(14),
+        a_n: t(15),
+        a_56: t(16),
+        duration: t(17),
+        rank: t(18),
+      }
+    });
 
     wsptr.reset();
 
@@ -282,11 +293,13 @@ module nori {
   }
 
   //TODO: *wsptr.ptr -> ?, fix all access
-  function ronanCBTick(wsptr:syWRonan) {
+  export function ronanCBTick(wsptr:syWRonan) {
+    //debugger;
     if (wsptr.wait4off || wsptr.wait4on) return;
 
     if (!wsptr.ptr) return;
 
+    //console.log('wsptr.framecount = ', wsptr.framecount);
     if (wsptr.framecount <= 0) {
       wsptr.framecount = wsptr.framerate;
       // let current phoneme expire
@@ -295,6 +308,7 @@ module nori {
         wsptr.spos++;
         if (wsptr.spos >= 4 || syls[wsptr.cursyl].ptab[wsptr.spos] == -1) {
           // go to next syllable
+          //console.log('go to next syllable');
 
           if (!wsptr.ptr) // empty text: silence!
           {
@@ -304,7 +318,7 @@ module nori {
             wsptr.spos = 0;
             wsptr.ptr = wsptr.baseptr;
           }
-          else if (wsptr.ptr == '!') // wait for noteon
+          else if (wsptr.ptr[0] == '!') // wait for noteon
           {
             wsptr.framecount = 0;
             wsptr.scounter = 0;
@@ -312,7 +326,7 @@ module nori {
             wsptr.ptr = wsptr.ptr.slice(1);
             return;
           }
-          else if (wsptr.ptr == '_') // noteoff
+          else if (wsptr.ptr[0] == '_') // noteoff
           {
             wsptr.framecount = 0;
             wsptr.scounter = 0;
@@ -321,9 +335,9 @@ module nori {
             return;
           }
 
-          if (wsptr.ptr && wsptr.ptr != '!' && wsptr.ptr != '_') {
+          if (wsptr.ptr && wsptr.ptr[0] != '!' && wsptr.ptr[0] != '_') {
             wsptr.durfactor = 0;
-            while (wsptr.ptr >= '0' && wsptr.ptr <= '9') {
+            while (/\d/.test(wsptr.ptr[0])) {
               wsptr.durfactor = 10 * wsptr.durfactor + (wsptr.ptr.charCodeAt(0) - '0'.charCodeAt(0));
               wsptr.ptr = wsptr.ptr.slice(1);
             }
@@ -331,20 +345,21 @@ module nori {
               wsptr.durfactor = 1;
             }
 
-            var fs:sInt;
+            var fs:sInt = 0;
             var len:sInt = 1;
-            var len2:sInt;
-
+            var len2:sInt = 0;
+            var ptrLowercase = wsptr.ptr.toLowerCase();
             for (fs = 0; fs < NSYLS - 1; fs++) {
               const s:syldef = syls[fs];
-              if (wsptr.ptr.indexOf(s.syl) === 0) {
+              if (ptrLowercase.indexOf(s.syl) === 0) {
                 len = s.syl.length;
                 break;
               }
             }
             wsptr.cursyl = fs;
+            console.log('cursyl', syls[fs]);
             wsptr.spos = 0;
-            wsptr.ptr += len;
+            wsptr.ptr = wsptr.ptr.slice(len);
           }
         }
 
@@ -368,15 +383,15 @@ module nori {
 
   }
 
-  function ronanCBNoteOn(wsptr:syWRonan) {
+  export function ronanCBNoteOn(wsptr:syWRonan) {
     wsptr.wait4on = 0;
   }
 
-  function ronanCBNoteOff(wsptr:syWRonan) {
+  export function ronanCBNoteOff(wsptr:syWRonan) {
     wsptr.wait4off = 0;
   }
 
-  function ronanCBSetCtl(wsptr:syWRonan, ctl:sU32, val:sU32) {
+  export function ronanCBSetCtl(wsptr:syWRonan, ctl:sU32, val:sU32) {
     // controller 4, 0-63			: set text #
     // controller 4, 64-127		: set frame rate
     // controller 5					: set pitch
@@ -399,7 +414,8 @@ module nori {
     }
   }
 
-  function ronanCBProcess(wsptr:syWRonan, buf:sF32[], len:sU32) {
+  export function ronanCBProcess(wsptr:syWRonan, buf:sF32[], bufOut:sF32[]) {
+    var len = buf.length;
     // prepare interpolation
     let src1 = wsptr;
     var src2 = wsptr.newframe;
@@ -413,6 +429,9 @@ module nori {
       a_bypass: delta(src1.a_bypass, src2.a_bypass),
     };
 
+    //console.log(wsptr.a_voicing, wsptr.newframe.a_voicing);
+    //console.log(wsptr.a_aspiration, wsptr.newframe.a_aspiration);
+
     for (var i = 0; i < len; i++) {
       // interpolate all values
       wsptr.rdef.forEach((rd, i) => {
@@ -425,7 +444,10 @@ module nori {
       wsptr.a_frication += deltaframe.a_frication;
       wsptr.a_bypass += deltaframe.a_bypass;
 
-      var in2 = buf[2 * i];
+
+      //var in2 = buf[2 * i];
+      var in2 = buf[i];
+
 
       // add aspiration noise
       in2 = in2 * wsptr.a_voicing + wsptr.noise() * wsptr.a_aspiration;
@@ -452,7 +474,9 @@ module nori {
       // EQ
       out = wsptr.peq1.tick(out) - out;
 
-      buf[2 * i] = buf[2 * i + 1] = out;
+      //buf[2 * i] = buf[2 * i + 1] = out;
+      //bufOut[i] = buf[i];
+      bufOut[i] = out;
     }
 
   }

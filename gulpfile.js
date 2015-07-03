@@ -3,6 +3,8 @@ var ts = require('gulp-typescript');
 var browserSync = require('browser-sync');
 var sass = require('gulp-sass');
 var bower = require('gulp-bower');
+var concat = require('gulp-concat');
+var sourcemaps = require('gulp-sourcemaps');
 
 gulp.task('bower', function () {
   return bower()
@@ -12,14 +14,17 @@ gulp.task('bower', function () {
 var tsProject = ts.createProject({
   typescript: require('typescript'),
   noImplicitAny: true,
-  module: 'amd',
-  out: 'nori-demo.js'
+  sortOutput: true
 });
 
 gulp.task('typescript', function () {
   var tsResult = gulp.src('src/**/*.ts')
+    .pipe(sourcemaps.init())
     .pipe(ts(tsProject));
-  return tsResult.js.pipe(gulp.dest('.tmp/scripts'));
+  return tsResult
+    .pipe(concat('nori-demo.js')) // You can use other plugins that also support gulp-sourcemaps
+    .pipe(sourcemaps.write()) // Now the sourcemaps are added to the .js file
+    .pipe(gulp.dest('.tmp/scripts'));;
 });
 
 gulp.task('sass', function () {

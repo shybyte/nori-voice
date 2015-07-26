@@ -17,7 +17,7 @@ var tsProject = ts.createProject({
   sortOutput: true
 });
 
-gulp.task('typescript', function () {
+gulp.task('typescript-demo', function () {
   var tsResult = gulp.src('src/**/*.ts')
     .pipe(sourcemaps.init())
     .pipe(ts(tsProject));
@@ -25,6 +25,16 @@ gulp.task('typescript', function () {
     .pipe(concat('nori-demo.js')) // You can use other plugins that also support gulp-sourcemaps
     .pipe(sourcemaps.write()) // Now the sourcemaps are added to the .js file
     .pipe(gulp.dest('.tmp/scripts'));;
+});
+
+gulp.task('typescript', function () {
+  var tsResult = gulp.src(['src/**/*.ts','!src/**/nori-demo.ts'])
+    .pipe(sourcemaps.init())
+    .pipe(ts(tsProject));
+  return tsResult
+    .pipe(concat('nori-facade.js')) // You can use other plugins that also support gulp-sourcemaps
+    .pipe(sourcemaps.write()) // Now the sourcemaps are added to the .js file
+    .pipe(gulp.dest('.tmp/scripts'));
 });
 
 gulp.task('sass', function () {
@@ -36,6 +46,7 @@ gulp.task('sass', function () {
 gulp.task('default', ['bower', 'sass', 'typescript'], function () {
   browserSync({
     open: false,
+    port: 3001,
     server: {
       baseDir: ["src",".tmp"],
       routes: {

@@ -46,7 +46,10 @@ gulp.task('sass', function () {
 gulp.task('default', ['bower', 'sass', 'typescript'], function () {
   browserSync({
     open: false,
-    port: 3001,
+    port: 3010,
+    ui: {
+      port: 3011
+    },
     server: {
       baseDir: ["src",".tmp"],
       routes: {

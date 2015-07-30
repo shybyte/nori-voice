@@ -5,7 +5,7 @@
 module nori.facade {
   'use strict';
 
-  export function startNoriVoice() {
+  export function startNoriVoice(audioContext: AudioContext = new AudioContext(), effects:AudioNode[] = []) {
     var nora = new syWRonan();
 
     nora.texts[0] = "";
@@ -14,7 +14,6 @@ module nori.facade {
     ronanCBSetCtl(nora, 4, 70);
     ronanCBSetCtl(nora, 5, 100);
 
-    var audioContext = new AudioContext();
     var oscillator = audioContext.createOscillator();
     oscillator.type = 'sawtooth';
     oscillator.frequency.setValueAtTime(175, 0);
@@ -49,8 +48,23 @@ module nori.facade {
 
 
     oscillator.start(audioContext.currentTime);
-    oscillator.connect(noriVoiceAudioProcessor);
-    noriVoiceAudioProcessor.connect(audioContext.destination);
+
+    var audioNodeChain:AudioNode[] = [oscillator, <AudioNode>noriVoiceAudioProcessor]
+      .concat(effects)
+      .concat([audioContext.destination]);
+
+    audioNodeChain.forEach((audioNode, i) => {
+      if (i < audioNodeChain.length - 1) {
+        var nextNode = audioNodeChain[i + 1];
+
+        // workaround for old tuna version?
+        if ((<any>nextNode)['input']) {
+          nextNode = (<any>nextNode)['input'];
+        }
+
+        audioNode.connect(nextNode);
+      }
+    });
 
     return {
       sing: (phonemes:string, freq:number) => {

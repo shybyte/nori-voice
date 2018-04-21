@@ -414,7 +414,7 @@ module nori {
     }
   }
 
-  export function ronanCBProcess(wsptr:syWRonan, buf:sF32[], bufOut:sF32[]) {
+  export function ronanCBProcess(wsptr:syWRonan, buf: Float32Array, bufOut: Float32Array) {
     var len = buf.length;
     // prepare interpolation
     let src1 = wsptr;

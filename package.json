@@ -3,18 +3,18 @@
   "version": "0.0.0",
   "description": "",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "tsc": "tsc",
+    "tscWatch": "tsc -w",
+    "start": "npm run tsc && npm run serve",
+    "serve": "browser-sync start --server src --server .tmp --server ."
   },
   "author": "Marco Stahl",
   "license": "AGPL",
   "devDependencies": {
-    "gulp": "~3.9.0",
-    "gulp-typescript": "~2.7.7",
-    "typescript": "~1.5.0-beta",
-    "browser-sync": "~2.7.12",
-    "gulp-sass": "~2.0.2",
-    "gulp-bower": "0.0.10",
-    "gulp-sourcemaps": "~1.5.2",
-    "gulp-concat": "~2.6.0"
+    "typescript": "2.8.3",
+    "browser-sync": "2.23.7"
+  },
+  "dependencies": {
+    "ramda": "0.25.0"
   }
 }
